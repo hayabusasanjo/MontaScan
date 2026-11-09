@@ -1,0 +1,64 @@
+name: Build MontaScan Android APK
+
+on:
+  push:
+    branches: [ main ]
+  workflow_dispatch:
+
+jobs:
+  build:
+    name: Compile Android Release APK
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v4
+
+      - name: Setup Java JDK
+        uses: actions/setup-java@v3
+        with:
+          distribution: 'temurin'
+          java-version: '17'
+
+      - name: Setup Flutter SDK
+        uses: subosito/flutter-action@v2
+        with:
+          channel: 'stable'
+          cache: true
+
+      - name: Initialize Android Scaffolding if needed
+        working-directory: ./mobile
+        run: |
+          if [ ! -d "android" ]; then
+            echo "Creating standard Android host wrapper..."
+            flutter create --org ph.edu.cdm.montascan .
+          fi
+
+      - name: Configure Android Permissions
+        working-directory: ./mobile
+        run: |
+          # Ensure camera and internet permissions are present in AndroidManifest.xml
+          MANIFEST="android/app/src/main/AndroidManifest.xml"
+          if grep -q "android.permission.CAMERA" "$MANIFEST"; then
+            echo "Camera permission already exists."
+          else
+            sed -i '/<manifest/a \    <uses-permission android:name="android.permission.CAMERA" \/>\n    <uses-permission android:name="android.permission.INTERNET" \/>' "$MANIFEST"
+          fi
+
+      - name: Install Flutter Packages
+        working-directory: ./mobile
+        run: flutter pub get
+
+      - name: Build Android Release APK
+        working-directory: ./mobile
+        run: |
+          flutter build apk --release \
+            --dart-define=SUPABASE_URL=https://rjaidazqazhfovxwaeba.supabase.co \
+            --dart-define=SUPABASE_ANON_KEY=sb_publishable_Zk9OK4Fh41cMhq1TNBQ0TQ_io7UmqHq
+
+      - name: Upload Release APK Artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: MontaScan-Release-APK
+          path: mobile/build/app/outputs/flutter-apk/app-release.apk
+          retention-days: 14
