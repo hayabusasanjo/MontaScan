@@ -25,6 +25,7 @@ import {
 
 const navigationItems = [
   { name: "Overview", href: "/dashboard", icon: LayoutDashboard },
+  { name: "Live QR Simulator", href: "/dashboard/simulator", icon: QrCode },
   { name: "Student Management", href: "/dashboard/students", icon: GraduationCap },
   { name: "Teacher Management", href: "/dashboard/teachers", icon: Users },
   { name: "Subjects & Sections", href: "/dashboard/academics", icon: BookOpen },
