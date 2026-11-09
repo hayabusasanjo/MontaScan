@@ -81,5 +81,8 @@ jobs:
         uses: actions/upload-artifact@v4
         with:
           name: MontaScan-Release-APK
-          path: mobile/build/app/outputs/flutter-apk/app-release.apk
+          path: |
+            mobile/build/**/*.apk
+            mobile/build/app/outputs/**/*.apk
+          if-no-files-found: error
           retention-days: 14
