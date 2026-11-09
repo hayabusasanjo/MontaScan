@@ -66,23 +66,26 @@ jobs:
       - name: Build Android Release APK
         working-directory: ./mobile
         run: |
-          set -e
           flutter build apk --release --no-tree-shake-icons \
             --dart-define=SUPABASE_URL=https://rjaidazqazhfovxwaeba.supabase.co \
-            --dart-define=SUPABASE_ANON_KEY=sb_publishable_Zk9OK4Fh41cMhq1TNBQ0TQ_io7UmqHq 2>&1 | tee build.log || {
-              echo "### Build Failure Log" >> $GITHUB_STEP_SUMMARY
-              echo '```' >> $GITHUB_STEP_SUMMARY
-              tail -n 60 build.log >> $GITHUB_STEP_SUMMARY
-              echo '```' >> $GITHUB_STEP_SUMMARY
-              exit 1
-            }
+            --dart-define=SUPABASE_ANON_KEY=sb_publishable_Zk9OK4Fh41cMhq1TNBQ0TQ_io7UmqHq
+
+      - name: Locate and Stage APK for Download
+        run: |
+          echo "Scanning workspace for compiled APKs:"
+          find . -name "*.apk"
+          APK_PATH=$(find . -name "*release*.apk" | head -n 1)
+          if [ -z "$APK_PATH" ]; then
+            APK_PATH=$(find . -name "*.apk" | head -n 1)
+          fi
+          echo "Found APK: $APK_PATH"
+          cp "$APK_PATH" ./montascan-release.apk
+          ls -lh ./montascan-release.apk
 
       - name: Upload Release APK
         uses: actions/upload-artifact@v4
         with:
           name: MontaScan-Release-APK
-          path: |
-            mobile/build/**/*.apk
-            mobile/build/app/outputs/**/*.apk
+          path: montascan-release.apk
           if-no-files-found: error
           retention-days: 14
