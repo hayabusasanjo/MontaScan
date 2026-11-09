@@ -26,37 +26,50 @@ jobs:
           channel: 'stable'
           cache: true
 
-      - name: Initialize Android Scaffolding if needed
+      - name: Initialize Android Scaffolding
         working-directory: ./mobile
         run: |
+          # Backup custom pubspec
+          cp pubspec.yaml pubspec.yaml.bak
+          
+          # Initialize platform wrappers if missing
           if [ ! -d "android" ]; then
-            echo "Creating standard Android host wrapper..."
-            flutter create --org ph.edu.cdm.montascan .
+            echo "Generating Android scaffolding..."
+            flutter create --org ph.edu.cdm.montascan --project-name montascan .
           fi
+          
+          # Restore custom pubspec
+          mv pubspec.yaml.bak pubspec.yaml
 
-      - name: Configure Android Permissions
+      - name: Patch Android Configuration for Camera & Scanner
         working-directory: ./mobile
         run: |
-          # Ensure camera and internet permissions are present in AndroidManifest.xml
-          MANIFEST="android/app/src/main/AndroidManifest.xml"
-          if grep -q "android.permission.CAMERA" "$MANIFEST"; then
-            echo "Camera permission already exists."
-          else
-            sed -i '/<manifest/a \    <uses-permission android:name="android.permission.CAMERA" \/>\n    <uses-permission android:name="android.permission.INTERNET" \/>' "$MANIFEST"
+          # 1. Update minSdkVersion to 21 for mobile_scanner
+          APP_GRADLE="android/app/build.gradle"
+          if [ -f "$APP_GRADLE" ]; then
+            sed -i 's/minSdkVersion flutter.minSdkVersion/minSdkVersion 21/g' "$APP_GRADLE"
+            sed -i 's/minSdk = flutter.minSdkVersion/minSdk = 21/g' "$APP_GRADLE"
+            sed -i 's/minSdkVersion = flutter.minSdkVersion/minSdkVersion = 21/g' "$APP_GRADLE"
           fi
 
-      - name: Install Flutter Packages
+          # 2. Add Camera and Internet permissions to AndroidManifest.xml
+          MANIFEST="android/app/src/main/AndroidManifest.xml"
+          if [ -f "$MANIFEST" ]; then
+            sed -i '/<manifest/a \    <uses-permission android:name="android.permission.CAMERA" \/>\n    <uses-permission android:name="android.permission.INTERNET" \/>\n    <uses-feature android:name="android.hardware.camera" android:required="false" \/>' "$MANIFEST"
+          fi
+
+      - name: Install Dependencies
         working-directory: ./mobile
         run: flutter pub get
 
       - name: Build Android Release APK
         working-directory: ./mobile
         run: |
-          flutter build apk --release \
+          flutter build apk --release --no-tree-shake-icons \
             --dart-define=SUPABASE_URL=https://rjaidazqazhfovxwaeba.supabase.co \
             --dart-define=SUPABASE_ANON_KEY=sb_publishable_Zk9OK4Fh41cMhq1TNBQ0TQ_io7UmqHq
 
-      - name: Upload Release APK Artifact
+      - name: Upload Release APK
         uses: actions/upload-artifact@v4
         with:
           name: MontaScan-Release-APK
