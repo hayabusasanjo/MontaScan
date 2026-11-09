@@ -9,14 +9,14 @@ class AppConstants {
   static const int qrRotationIntervalSeconds = 20;
   static const int lateGracePeriodMinutes = 15;
 
-  // Supabase Configuration fallbacks (overridden via --dart-define)
+  // Supabase Configuration
   static const String defaultSupabaseUrl = String.fromEnvironment(
     'SUPABASE_URL',
-    defaultValue: 'https://placeholder-project.supabase.co',
+    defaultValue: 'https://rjaidazqazhfovxwaeba.supabase.co',
   );
 
   static const String defaultSupabaseAnonKey = String.fromEnvironment(
     'SUPABASE_ANON_KEY',
-    defaultValue: 'placeholder-anon-key',
+    defaultValue: 'sb_publishable_Zk9OK4Fh41cMhq1TNBQ0TQ_io7UmqHq',
   );
 }
